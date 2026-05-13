@@ -1,7 +1,7 @@
 # STAGE 03 — CARLA Recorder Report
 
-> Date: 2026-05-12  
-> Status: IMPLEMENTED / SMOKE VALIDATED / LONG-RUN CARLA OOM BLOCKER
+> Date: 2026-05-13  
+> Status: IMPLEMENTED / LONG-RUN VALIDATED (LIGHT PROFILE)
 
 ## Scope
 
@@ -99,16 +99,100 @@ timestamps_monotonic True
 
 ## Known Issues / Fallbacks
 
-1. Long runs with two camera sensors on CARLA 0.10.0 UE5 + Town10HD_Opt still trigger server-side Vulkan OOM on this 8GB VRAM laptop.
-   - Observed with 100-frame attempts even at `80x45`.
-   - CARLA log ends with `Out of memory on Vulkan`.
-   - This blocks the Stage 03 full 1000-frame exit criterion.
-2. The smoke run is valid for recorder code and data format, but not for full dataset collection.
-3. Recommended fallback before moving to Stage 04:
-   - retry Stage 03 with the packaged CARLA release instead of Docker, or
-   - use a lighter CARLA map if available in the runtime package, or
-   - record RGB/semantic/LiDAR in smaller staged passes only if strict frame synchronization is waived.
+1. CARLA Docker `0.10.0` runtime on this host only exposes maps:
+   - `Town10HD_Opt`
+   - `Mine_01`
+2. Previous `Town03` config was not available in runtime, and recorder did not apply map selection.
+3. `Town10HD_Opt` remains unstable on this host (frequent `std::exception`/Vulkan pressure). `Mine_01` is stable for 1000-frame long run with reduced default load.
+4. In Mine_01 long-runs, ego snapshot can disappear late in run (`state_valid=false` fallback in metadata for affected frames). Sensor synchronization and timestamp monotonicity stay valid.
 
 ## Next Recommended Action
 
-Stay on Stage 03 until the long-run CARLA OOM is resolved or explicitly waived. Do not move to Stage 04 under strict policy until a usable recording target is produced.
+Proceed to Stage 04 with the validated light Stage 03 profile (`Mine_01`, `320x180`, `LiDAR 20k pps`, no background traffic), if this dataset profile is acceptable for downstream tasks.
+
+## Revalidation on 2026-05-13
+
+### Recorder fixes applied
+
+- Added `--map` CLI override and `carla.map` override support.
+- Recorder now validates/loads a runtime-available map before recording.
+- Restored robust cleanup:
+  - `sensor.stop()`
+  - batch actor destruction
+  - restore TM/world synchronous settings in `finally`
+- Added clearer runtime diagnostics (`world tick`, snapshot, sensor-sync, and write-stage errors).
+
+### Config changes applied
+
+- Default map changed to `Mine_01`.
+- Default load reduced:
+  - camera resolution `320x180`
+  - LiDAR `points_per_second: 20000`
+  - `traffic_vehicles: 0`
+
+### Long-run result (default config after fixes)
+
+Command:
+
+```bash
+conda run -n carla-client python scripts/carla_recorder.py \
+  --output-dir data/raw/stage03_longrun_1000_snapshotmeta \
+  --overwrite --timeout 20
+```
+
+Observed result:
+
+- PASS: `1000/1000` frames written
+- PASS: synchronized sensor frames (`rgb == semantic == lidar`) across run
+- PASS: monotonic metadata timestamps
+- PASS: clean process exit (no post-run abort)
+
+Output check:
+
+```text
+counts {'rgb': 1000, 'semantic': 1000, 'lidar': 1000, 'metadata': 1000}
+rgb_shape (180, 320, 3)
+semantic_shape (180, 320, 3)
+lidar_shape (829, 4) float32
+timestamps_monotonic True
+sync_all True
+ego_state_invalid_frames 449
+```
+
+## Revalidation Update (2026-05-13, Hardened Plan)
+
+Recorder contract was extended to support downstream Stage 09 requirements:
+
+- New artifacts per recording:
+  - `calib/sensors.json`
+  - `scenario.json`
+  - `dataset_complete.json`
+- `recording_summary.json` now includes:
+  - CARLA/runtime metadata
+  - recording parameters
+  - integrity section
+  - `complete` marker
+- Integrity marker is now hard-enforced:
+  - if post-run integrity fails, recorder exits non-zero.
+
+Additional runtime robustness/fixes:
+- startup connect wait (`carla.startup_wait_seconds`, default 30s)
+- optional weather preset from config
+- optional cyclist-biased traffic spawn (`--prefer-cyclist-vehicles`)
+- pedestrian fallback spawn when navmesh random locations are unavailable
+- Cyclist class detection expanded to include motorcycle-type actors
+
+### New validated recordings
+
+1. Canonical main dataset:
+- `data/raw/stage03_mine_main_1000`
+- status: complete, aligned 1000 frames
+
+2. Detection-label auxiliary dataset:
+- `data/raw/stage03_mine_aux_200_traffic_far`
+- status: complete, aligned 200 frames
+- actor labels include `Vehicle` and `Pedestrian`
+
+### Town10 collection status
+
+On this host/runtime, repeated Town10 attempts remain unstable (native `std::exception`/abort before usable aligned output). These attempts are explicitly quarantined and excluded from progression checks.

@@ -2,20 +2,22 @@ carla:
   host: localhost
   port: 2000
   timeout: 10.0
-  map: Town03
+  startup_wait_seconds: 30.0
+  map: Mine_01
+  weather: ClearNoon
   quality: Low
   tm_port: 10000
   resolution:
-    width: 640
-    height: 360
+    width: 320
+    height: 180
 
 sensors:
   rgb_camera:
     blueprint: sensor.camera.rgb
     transform: {x: 1.5, y: 0.0, z: 2.4, pitch: 0.0, yaw: 0.0, roll: 0.0}
     attributes:
-      image_size_x: 640
-      image_size_y: 360
+      image_size_x: 320
+      image_size_y: 180
       fov: 110
       sensor_tick: 0.1
 
@@ -23,8 +25,8 @@ sensors:
     blueprint: sensor.camera.semantic_segmentation
     transform: {x: 1.5, y: 0.0, z: 2.4, pitch: 0.0, yaw: 0.0, roll: 0.0}
     attributes:
-      image_size_x: 640
-      image_size_y: 360
+      image_size_x: 320
+      image_size_y: 180
       fov: 110
       sensor_tick: 0.1
 
@@ -33,7 +35,7 @@ sensors:
     transform: {x: 0.0, y: 0.0, z: 2.5, pitch: 0.0, yaw: 0.0, roll: 0.0}
     attributes:
       channels: 32
-      points_per_second: 200000
+      points_per_second: 20000
       rotation_frequency: 10
       range: 100
       upper_fov: 10
@@ -43,8 +45,9 @@ sensors:
 recording:
   num_frames: 1000
   output_dir: data/raw/recording_001
-  traffic_vehicles: 5
+  traffic_vehicles: 0
   traffic_walkers: 0
+  prefer_cyclist_vehicles: 0
   use_synchronous_mode: true
   fixed_delta_seconds: 0.1
   warmup_ticks: 5
