@@ -1,0 +1,110 @@
+[
+  {
+    "name": "carla",
+    "description": "CARLA Simulator (UE5)",
+    "exists": true,
+    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/carla",
+    "git_info": {
+      "branch": "ue5-dev",
+      "commit": "ffd9d275cb07d0f9cdc49c45c1e3e31c110d1d67",
+      "date": "2026-05-06 16:37:04 +0200"
+    },
+    "size": "3.3G",
+    "missing_files": [],
+    "missing_dirs": [],
+    "found_files": [
+      "README.md",
+      "Docs/start_quickstart.md",
+      "Docs/core_sensors.md",
+      "Docs/ref_sensors.md",
+      "Docs/adv_recorder.md",
+      "Docs/build_docker.md",
+      "PythonAPI/examples/manual_control.py",
+      "PythonAPI/examples/generate_traffic.py",
+      "PythonAPI/examples/sensor_synchronization.py",
+      "PythonAPI/examples/open3d_lidar.py",
+      "PythonAPI/examples/visualize_multiple_sensors.py",
+      "PythonAPI/examples/requirements.txt"
+    ],
+    "found_dirs": [
+      "Docs",
+      "PythonAPI",
+      "PythonAPI/examples"
+    ],
+    "status": "PASS"
+  },
+  {
+    "name": "pytorch-auto-drive",
+    "description": "PytorchAutoDrive \u2014 Segmentation + Lane Detection",
+    "exists": true,
+    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/pytorch-auto-drive",
+    "git_info": {
+      "branch": "master",
+      "commit": "137e63a9e6c3cd2cfeb15e101808478d7b25ddbd",
+      "date": "2023-10-04 11:01:55 +0800"
+    },
+    "size": "8.5M",
+    "missing_files": [],
+    "missing_dirs": [],
+    "found_files": [
+      "README.md",
+      "requirements.txt",
+      "main_semseg.py",
+      "main_landet.py",
+      "docs/INSTALL.md",
+      "docs/SEGMENTATION.md",
+      "docs/VISUALIZATION.md",
+      "docs/BENCHMARK.md",
+      "docs/DEPLOY.md",
+      "docs/MODEL_ZOO.md",
+      "docs/IMAGENET_MODELS.md",
+      "configs/semantic_segmentation/erfnet/cityscapes_512x1024.py"
+    ],
+    "found_dirs": [
+      "configs/semantic_segmentation/erfnet",
+      "configs/semantic_segmentation/enet",
+      "configs/lane_detection",
+      "tools/vis",
+      "docs"
+    ],
+    "status": "PASS"
+  },
+  {
+    "name": "OpenPCDet",
+    "description": "OpenPCDet \u2014 LiDAR 3D Object Detection",
+    "exists": true,
+    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/OpenPCDet",
+    "git_info": {
+      "branch": "master",
+      "commit": "233f849829b6ac19afb8af8837a0246890908755",
+      "date": "2025-10-08 18:56:40 +0800"
+    },
+    "size": "10M",
+    "missing_files": [],
+    "missing_dirs": [],
+    "found_files": [
+      "README.md",
+      "requirements.txt",
+      "setup.py",
+      "docs/INSTALL.md",
+      "docs/DEMO.md",
+      "docs/GETTING_STARTED.md",
+      "docs/CUSTOM_DATASET_TUTORIAL.md",
+      "tools/demo.py",
+      "tools/train.py",
+      "tools/test.py",
+      "tools/cfgs/kitti_models/pointpillar.yaml",
+      "tools/cfgs/kitti_models/second.yaml",
+      "tools/cfgs/kitti_models/pv_rcnn.yaml",
+      "tools/cfgs/dataset_configs/custom_dataset.yaml"
+    ],
+    "found_dirs": [
+      "pcdet",
+      "tools",
+      "tools/cfgs/kitti_models",
+      "tools/cfgs/dataset_configs",
+      "docker"
+    ],
+    "status": "PASS"
+  }
+]

@@ -1,0 +1,43 @@
+# Data and outputs
+data/
+output/
+*.npy
+*.bin
+*.pth
+*.pt
+*.ckpt
+*.engine
+*.onnx
+
+# CARLA package artifacts
+CARLA_*/
+CARLA_*.tar.gz
+
+# Python caches/build
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Environments and local tooling
+.venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+tb_logs/
+
+# Planning artifacts
+final_plan/
+AGENT_FINAL_PLAN_PROMPT.md
+STAGE_TEMPLATE.md
