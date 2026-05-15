@@ -91,6 +91,18 @@ def parse_args() -> argparse.Namespace:
         help="Optional radial max range (meters) for actor label filtering",
     )
     parser.add_argument(
+        "--min-points-per-class",
+        type=str,
+        nargs="*",
+        default=[],
+        metavar="CLASS:MIN",
+        help=(
+            "Optional minimum LiDAR points per GT box to keep label, e.g. "
+            "'Vehicle:1 Pedestrian:1 Cyclist:1'. "
+            "Classes omitted default to 0."
+        ),
+    )
+    parser.add_argument(
         "--flip-point-y",
         action="store_true",
         default=True,
@@ -120,6 +132,28 @@ def parse_args() -> argparse.Namespace:
         help="Generate custom_infos_{train,val}.pkl and custom_dbinfos_train.pkl in output-dir",
     )
     return parser.parse_args()
+
+
+def parse_min_points_per_class(values: list[str]) -> dict[str, int]:
+    out = {name: 0 for name in CLASS_NAMES}
+    for item in values:
+        text = str(item).strip()
+        if not text:
+            continue
+        if ":" not in text:
+            raise ValueError(f"Invalid --min-points-per-class entry '{item}', expected CLASS:MIN")
+        cls, raw_min = text.split(":", 1)
+        cls = cls.strip()
+        if cls not in CLASS_NAMES:
+            raise ValueError(f"Unknown class '{cls}' in --min-points-per-class (expected one of {CLASS_NAMES})")
+        try:
+            min_pts = int(raw_min.strip())
+        except ValueError as exc:
+            raise ValueError(f"Invalid min points '{raw_min}' for class '{cls}'") from exc
+        if min_pts < 0:
+            raise ValueError(f"Min points must be >=0 for class '{cls}'")
+        out[cls] = min_pts
+    return out
 
 
 def collect_common_stems(input_dir: Path) -> list[str]:
@@ -515,6 +549,7 @@ def main() -> int:
     args = parse_args()
     input_dirs = resolve_input_dirs(args)
     output_dir = args.output_dir.resolve()
+    min_points_per_class = parse_min_points_per_class(args.min_points_per_class)
 
     if not (0.0 < args.train_ratio < 1.0):
         raise ValueError("--train-ratio must be in (0, 1)")
@@ -553,6 +588,8 @@ def main() -> int:
     empty_label_frames = 0
     total_labels = 0
     class_histogram = class_histogram_template()
+    class_histogram_removed_by_points = class_histogram_template()
+    labels_removed_by_points = 0
 
     converted = 0
     manifest_sources = []
@@ -609,6 +646,26 @@ def main() -> int:
                     if world_box is not None:
                         labels.append(world_box)
 
+            # Optional GT cleanup: keep boxes supported by at least N LiDAR points per class.
+            if labels:
+                filtered: list[BoxLabel] = []
+                xyz = points[:, :3]
+                for lbl in labels:
+                    min_pts = int(min_points_per_class.get(lbl.class_name, 0))
+                    if min_pts <= 0:
+                        filtered.append(lbl)
+                        continue
+                    box = np.array([lbl.x, lbl.y, lbl.z, lbl.dx, lbl.dy, lbl.dz, lbl.heading], dtype=np.float32)
+                    num_pts = int(points_in_oriented_box(xyz, box).sum())
+                    if num_pts >= min_pts:
+                        filtered.append(lbl)
+                    else:
+                        labels_removed_by_points += 1
+                        class_histogram_removed_by_points[lbl.class_name] = (
+                            class_histogram_removed_by_points.get(lbl.class_name, 0) + 1
+                        )
+                labels = filtered
+
             labels.sort(key=lambda x: x.class_name)
             total_labels += len(labels)
             if len(labels) == 0:
@@ -661,6 +718,9 @@ def main() -> int:
         "total_labels_written": total_labels,
         "empty_label_ratio": (empty_label_frames / converted) if converted > 0 else None,
         "label_class_histogram": class_histogram,
+        "min_points_per_class": min_points_per_class,
+        "labels_removed_by_min_points_total": int(labels_removed_by_points),
+        "labels_removed_by_min_points_per_class": class_histogram_removed_by_points,
         "flip_point_y": bool(args.flip_point_y),
         "sample_points_shape": list(sample_points.shape),
         "sample_points_dtype": str(sample_points.dtype),
