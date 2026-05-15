@@ -1,0 +1,8 @@
+.git
+__pycache__
+*.pyc
+.venv
+output
+data
+final_plan
+AGENT_FINAL_PLAN_PROMPT.md

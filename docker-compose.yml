@@ -1,0 +1,23 @@
+services:
+  carla-perception-lab-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: carla-perception-lab-dashboard
+    working_dir: /workspace/carla-perception-lab
+    tty: true
+    stdin_open: true
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility,video
+    volumes:
+      - ./:/workspace/carla-perception-lab
+    command: >
+      python3 scripts/make_dashboard.py --help
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
