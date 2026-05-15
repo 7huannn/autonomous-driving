@@ -24,6 +24,10 @@ dist/
 # Environments and local tooling
 .venv/
 .env
+deploy/env_*.yml
+deploy/requirements_*_frozen.txt
+deploy/demo_data/
+deploy/demo_data_report.json
 
 # IDE
 .vscode/
