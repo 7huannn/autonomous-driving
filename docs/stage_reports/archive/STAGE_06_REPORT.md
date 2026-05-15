@@ -33,7 +33,7 @@ Executed `final_plan/STAGE_06_DATASET_INTERFACE.md` only:
   - writes summary JSON
 - `configs/carla_lidar.yaml`
   - project-level dataset/conversion reference for CARLA LiDAR -> OpenPCDet
-- `docs/stage_reports/STAGE_06_REPORT.md`
+- `docs/stage_reports/archive/STAGE_06_REPORT.md`
 
 ## Conversion Runs
 

@@ -24,7 +24,7 @@ Executed `final_plan/STAGE_05_OPENPCDET_SMOKE_TEST.md` only:
     - BEV visualization export to PNG
     - metrics summary to JSON
 - `docs/pcdet_smoke_test.png`
-- `docs/stage_reports/STAGE_05_REPORT.md`
+- `docs/stage_reports/archive/STAGE_05_REPORT.md`
 
 ## Validation Performed
 

@@ -375,8 +375,8 @@ CARLA has **23 classes**, Cityscapes has **19 training classes**. Many map direc
 | File | Purpose |
 |------|---------|
 | `scripts/verify_repos.py` | Automated repo structure verification script |
-| `docs/stage_reports/repo_audit_results.json` | Machine-readable verification results |
-| `docs/stage_reports/STAGE_00_REPORT.md` | This report |
+| `docs/stage_reports/archive/repo_audit_results.json` | Machine-readable verification results |
+| `docs/stage_reports/archive/STAGE_00_REPORT.md` | This report |
 
 ## 10. Files Modified
 

@@ -54,7 +54,7 @@ Executed `final_plan/STAGE_08_LIDAR_INTEGRATION.md` only:
 
 ### 1) Re-convert probe dataset with fixed point-y flip
 ```bash
-/home/thuan/miniconda3/envs/pcdet/bin/python scripts/convert_to_pcdet.py \
+conda run -n pcdet python scripts/convert_to_pcdet.py \
   --input-dir data/raw/stage06_label_probe \
   --output-dir data/processed/pcdet_format_probe \
   --num-frames 80 --overwrite --shuffle-split --seed 42 \
@@ -64,7 +64,7 @@ Executed `final_plan/STAGE_08_LIDAR_INTEGRATION.md` only:
 ### 2) Fine-tune PointPillar (project wrapper)
 ```bash
 ABS=$(realpath data/processed/pcdet_format_probe_yflip)
-/home/thuan/miniconda3/envs/pcdet/bin/python scripts/pcdet_finetune.py \
+conda run -n pcdet python scripts/pcdet_finetune.py \
   --cfg-file configs/carla_lidar_probe.yaml \
   --pretrained-model data/checkpoints/pointpillar_7728.pth \
   --epochs 5 --batch-size 1 --workers 2 \
@@ -77,7 +77,7 @@ Checkpoint used after training:
 
 ### 3) Inference + evaluation with fine-tuned checkpoint
 ```bash
-/home/thuan/miniconda3/envs/pcdet/bin/python scripts/run_lidar_det.py \
+conda run -n pcdet python scripts/run_lidar_det.py \
   --mode infer \
   --cfg-file configs/carla_lidar_probe.yaml \
   --checkpoint <checkpoint_epoch_5.pth> \
@@ -86,7 +86,7 @@ Checkpoint used after training:
   --score-thresh 0.1 \
   --pred-dir output/detection_3d/predictions_ft
 
-/home/thuan/miniconda3/envs/pcdet/bin/python scripts/run_lidar_det.py \
+conda run -n pcdet python scripts/run_lidar_det.py \
   --mode evaluate \
   --cfg-file configs/carla_lidar_probe.yaml \
   --checkpoint <checkpoint_epoch_5.pth> \
@@ -98,7 +98,7 @@ Checkpoint used after training:
 
 ### 4) Visualization
 ```bash
-/home/thuan/miniconda3/envs/pcdet/bin/python scripts/run_lidar_det.py \
+conda run -n pcdet python scripts/run_lidar_det.py \
   --mode visualize \
   --dataset-dir data/processed/pcdet_format_probe \
   --pred-dir output/detection_3d/predictions_ft \

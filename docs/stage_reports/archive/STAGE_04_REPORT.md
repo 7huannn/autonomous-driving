@@ -24,7 +24,7 @@ Executed `final_plan/STAGE_04_PAD_SMOKE_TEST.md` only:
     - summary export to JSON
 - `docs/pad_smoke_test.png`
   - screenshot artifact copied from inference result
-- `docs/stage_reports/STAGE_04_REPORT.md`
+- `docs/stage_reports/archive/STAGE_04_REPORT.md`
 
 ## Runtime Environment Fixes (Fallbacks Applied)
 

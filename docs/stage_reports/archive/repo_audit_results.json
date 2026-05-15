@@ -3,7 +3,7 @@
     "name": "carla",
     "description": "CARLA Simulator (UE5)",
     "exists": true,
-    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/carla",
+    "path": "repos/carla",
     "git_info": {
       "branch": "ue5-dev",
       "commit": "ffd9d275cb07d0f9cdc49c45c1e3e31c110d1d67",
@@ -37,7 +37,7 @@
     "name": "pytorch-auto-drive",
     "description": "PytorchAutoDrive \u2014 Segmentation + Lane Detection",
     "exists": true,
-    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/pytorch-auto-drive",
+    "path": "repos/pytorch-auto-drive",
     "git_info": {
       "branch": "master",
       "commit": "137e63a9e6c3cd2cfeb15e101808478d7b25ddbd",
@@ -73,7 +73,7 @@
     "name": "OpenPCDet",
     "description": "OpenPCDet \u2014 LiDAR 3D Object Detection",
     "exists": true,
-    "path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/repos/OpenPCDet",
+    "path": "repos/OpenPCDet",
     "git_info": {
       "branch": "master",
       "commit": "233f849829b6ac19afb8af8837a0246890908755",
