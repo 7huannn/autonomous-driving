@@ -70,9 +70,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--det-checkpoint",
         type=Path,
-        default=Path(
-            "../repos/OpenPCDet/output/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/"
-            "carla-perception-lab/configs/carla_lidar_probe/carla_probe_finetune/ckpt/checkpoint_epoch_5.pth"
+        default=None,
+        help=(
+            "Detection checkpoint path. If omitted, auto-discover a fine-tuned "
+            "carla_probe_finetune checkpoint under --det-openpcdet-repo/output, "
+            "then fallback to data/checkpoints/pointpillar_7728.pth."
         ),
     )
     parser.add_argument("--det-split", choices=("train", "val"), default="val")
@@ -105,6 +107,26 @@ def resolve_args(args: argparse.Namespace) -> None:
         val = getattr(args, key)
         if isinstance(val, Path):
             setattr(args, key, val.resolve())
+
+    if isinstance(args.det_checkpoint, Path):
+        args.det_checkpoint = args.det_checkpoint.resolve()
+
+
+def resolve_det_checkpoint(args: argparse.Namespace) -> Path:
+    if isinstance(args.det_checkpoint, Path):
+        return args.det_checkpoint
+
+    output_root = args.det_openpcdet_repo / "output"
+    if output_root.is_dir():
+        matches = sorted(
+            output_root.glob(
+                "**/configs/carla_lidar_probe/carla_probe_finetune/ckpt/checkpoint_epoch_5.pth"
+            )
+        )
+        if matches:
+            return matches[-1].resolve()
+
+    return Path("data/checkpoints/pointpillar_7728.pth").resolve()
 
 
 def query_gpu_memory_mib() -> int | None:
@@ -326,6 +348,13 @@ def benchmark_detection(args: argparse.Namespace) -> dict[str, Any]:
     if not args.det_dataset_dir.is_dir():
         raise FileNotFoundError(f"Det dataset dir missing: {args.det_dataset_dir}")
 
+    det_checkpoint = resolve_det_checkpoint(args)
+    if not det_checkpoint.exists():
+        raise FileNotFoundError(
+            f"Det checkpoint not found: {det_checkpoint}. "
+            "Pass --det-checkpoint explicitly or place checkpoint in data/checkpoints/"
+        )
+
     measure_vram = not args.no_vram
     tmp_root = args.tmp_root / "det"
     tmp_root.mkdir(parents=True, exist_ok=True)
@@ -344,7 +373,7 @@ def benchmark_detection(args: argparse.Namespace) -> dict[str, Any]:
         "--cfg-file",
         str(args.det_cfg_file),
         "--checkpoint",
-        str(args.det_checkpoint),
+        str(det_checkpoint),
         "--dataset-dir",
         str(args.det_dataset_dir),
         "--split",
@@ -425,7 +454,7 @@ def benchmark_detection(args: argparse.Namespace) -> dict[str, Any]:
             "forward_latency_ms_std": safe_std(fwd_lat_vals),
             "peak_vram_mib_max": max(vram_vals) if vram_vals else None,
         },
-        "checkpoint": checkpoint_stats(args.det_checkpoint),
+        "checkpoint": checkpoint_stats(det_checkpoint),
         "accuracy": {
             "eval_json": str(args.det_eval_json),
             "mAP": eval_data.get("mAP"),

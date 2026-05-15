@@ -26,7 +26,6 @@ DET_DIR="output/detection_3d_canonical_mix"
 STAGE_VALIDATION_DIR="output/stage_validation"
 DASHBOARD_DIR="output/dashboard"
 
-DET_CHECKPOINT_FT="../repos/OpenPCDet/output/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/configs/carla_lidar_probe/carla_probe_finetune/ckpt/checkpoint_epoch_5.pth"
 DET_CHECKPOINT_BASE="data/checkpoints/pointpillar_7728.pth"
 
 log() {
@@ -110,10 +109,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -f "$DET_CHECKPOINT_FT" ]]; then
+find_finetuned_det_checkpoint() {
+  local output_root="../repos/OpenPCDet/output"
+  if [[ ! -d "$output_root" ]]; then
+    return 1
+  fi
+  find "$output_root" -type f \
+    -path "*/configs/carla_lidar_probe/carla_probe_finetune/ckpt/checkpoint_epoch_5.pth" \
+    -print 2>/dev/null | sort | tail -n 1
+}
+
+DET_CHECKPOINT_FT="$(find_finetuned_det_checkpoint || true)"
+if [[ -n "$DET_CHECKPOINT_FT" ]]; then
   DET_CHECKPOINT="$DET_CHECKPOINT_FT"
+  log "Using fine-tuned detection checkpoint: $DET_CHECKPOINT"
 else
   DET_CHECKPOINT="$DET_CHECKPOINT_BASE"
+  log "Fine-tuned checkpoint not found; fallback to base checkpoint: $DET_CHECKPOINT"
 fi
 
 mkdir -p "$STAGE_VALIDATION_DIR" "$DASHBOARD_DIR"
