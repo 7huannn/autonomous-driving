@@ -25,7 +25,9 @@ evals/
 ├── experiment_registry.jsonl   # Append-only experiment log
 ├── check_env.py                # Environment guard
 ├── check_dataset_quality.py    # Dataset structural validation
+├── check_manifest.py           # Provenance manifest validation
 ├── sweep_checkpoints.py        # Checkpoint sweep with metric extraction
+├── fusion_rescore.py           # Fuse/rescore existing eval JSONs (no training)
 ├── select_best_checkpoint.py   # Best checkpoint selection + collapse detection
 ├── compare_experiments.py      # Experiment-vs-baseline comparison
 ├── score.py                    # Scoring utilities (PROTECTED)
@@ -77,6 +79,26 @@ python evals/select_best_checkpoint.py \
   --sweep outputs/benchmarks/checkpoint_sweep_EXP001.json
 ```
 
+### 4b. Fusion/Rescore (for fusion-based baselines)
+Use this when the comparison baseline is produced by post-processing multiple
+existing eval results rather than a single checkpoint.
+
+```bash
+python evals/fusion_rescore.py \
+  --experiment-id EXP001_FUSION \
+  --vehicle-result output/detection_3d_canonical_mix_v3/eval_results_e7.json \
+  --pedestrian-result output/detection_3d_canonical_mix_v3/eval_results_e5.json \
+  --output outputs/benchmarks/fusion_rescore_EXP001_FUSION.json \
+  --manifest-output outputs/benchmarks/fusion_rescore_EXP001_FUSION_manifest.json \
+  --rescore-mode none
+```
+
+Notes:
+- This does not retrain any model.
+- This does not modify labels, split, or metric definitions.
+- Use fusion/rescore experiments for fair comparison against fusion/rescore baselines
+  like `eval_results_fusion_rescore_best.json`.
+
 ### 5. Experiment Comparison
 ```bash
 python evals/compare_experiments.py \
@@ -93,6 +115,29 @@ python evals/gating.py --mode provisional --experiment-id EXP001
 # Target: pass only if mAP >= 0.60
 python evals/gating.py --mode target --experiment-id EXP001
 ```
+
+### 7. Manifest Validation (Required for Baseline Replacement)
+Every baseline-replacement candidate must include a manifest and pass:
+
+```bash
+python evals/check_manifest.py \
+  --manifest outputs/benchmarks/<manifest>.json \
+  --mode baseline-grade
+```
+
+For provisional auditing:
+```bash
+python evals/check_manifest.py \
+  --manifest outputs/benchmarks/<manifest>.json \
+  --mode provisional
+```
+
+Replacement policy:
+- A result cannot replace the current baseline unless it passes both:
+  1. harness gate (`evals/gating.py`)
+  2. manifest check (`evals/check_manifest.py --mode baseline-grade`)
+- Historical baseline remains the comparison anchor until a manifest-backed
+  result beats it.
 
 ## Stop Conditions
 

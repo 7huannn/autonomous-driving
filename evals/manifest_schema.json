@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CARLA Perception Lab Baseline Manifest",
+  "type": "object",
+  "required": [
+    "manifest_version",
+    "experiment_id",
+    "result_file",
+    "result_sha256",
+    "result_type",
+    "metric_name",
+    "mAP",
+    "class_ap",
+    "dataset",
+    "config",
+    "source_files",
+    "command",
+    "git",
+    "runtime",
+    "validation",
+    "eligibility"
+  ],
+  "properties": {
+    "manifest_version": {"type": ["string", "number"]},
+    "experiment_id": {"type": "string"},
+    "result_file": {"type": "string"},
+    "result_sha256": {"type": "string"},
+    "result_type": {
+      "type": "string",
+      "enum": ["raw_checkpoint_eval", "fusion_rescore", "postprocess_eval"]
+    },
+    "metric_name": {"type": "string"},
+    "mAP": {"type": ["number", "null"]},
+    "class_ap": {
+      "type": "object",
+      "required": ["Vehicle", "Pedestrian"],
+      "properties": {
+        "Vehicle": {"type": ["number", "object", "null"]},
+        "Pedestrian": {"type": ["number", "object", "null"]}
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["path", "sha256_or_manifest", "split_name", "split_file", "split_sha256", "num_frames", "total_gt_boxes"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256_or_manifest": {"type": ["string", "null"]},
+        "split_name": {"type": "string"},
+        "split_file": {"type": "string"},
+        "split_sha256": {"type": ["string", "null"]},
+        "num_frames": {"type": ["integer", "null"]},
+        "total_gt_boxes": {"type": ["integer", "null"]}
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": ["string", "null"]}
+      }
+    },
+    "source_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "role"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": ["string", "null"]},
+          "role": {"type": "string"}
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "required": ["executable", "args", "cwd", "conda_env"],
+      "properties": {
+        "executable": {"type": ["string", "null"]},
+        "args": {"type": ["array", "null"], "items": {"type": "string"}},
+        "cwd": {"type": ["string", "null"]},
+        "conda_env": {"type": ["string", "null"]}
+      }
+    },
+    "git": {
+      "type": "object",
+      "required": ["commit", "status_short"],
+      "properties": {
+        "commit": {"type": ["string", "null"]},
+        "status_short": {"type": ["string", "array", "object", "null"]}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["timestamp_utc", "hostname", "python_version"],
+      "properties": {
+        "timestamp_utc": {"type": ["string", "null"]},
+        "hostname": {"type": ["string", "null"]},
+        "python_version": {"type": ["string", "null"]}
+      }
+    },
+    "rescore_params": {"type": ["object", "null"]},
+    "validation": {
+      "type": "object",
+      "required": ["env_check_file", "dataset_quality_file", "compare_file", "gate_file"],
+      "properties": {
+        "env_check_file": {"type": ["string", "null"]},
+        "dataset_quality_file": {"type": ["string", "null"]},
+        "compare_file": {"type": ["string", "null"]},
+        "gate_file": {"type": ["string", "null"]}
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "required": ["baseline_grade", "replacement_candidate", "reason"],
+      "properties": {
+        "baseline_grade": {"type": "boolean"},
+        "replacement_candidate": {"type": "boolean"},
+        "reason": {"type": "string"}
+      }
+    }
+  }
+}

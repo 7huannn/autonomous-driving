@@ -133,6 +133,30 @@ Writes: `outputs/benchmarks/checkpoint_sweep_<experiment_id>.{json,csv}`
 
 ---
 
+## 6b. How to Run Fusion/Rescore Experiments (No Training)
+
+When the baseline was produced by post-processing across multiple checkpoint
+outputs, compare against it using the same fusion/rescore pattern instead of
+raw single-checkpoint sweep only.
+
+```bash
+python evals/fusion_rescore.py \
+  --experiment-id EXP_FUSION \
+  --vehicle-result output/detection_3d_canonical_mix_v3/eval_results_e7.json \
+  --pedestrian-result output/detection_3d_canonical_mix_v3/eval_results_e5.json \
+  --output outputs/benchmarks/fusion_rescore_EXP_FUSION.json \
+  --manifest-output outputs/benchmarks/fusion_rescore_EXP_FUSION_manifest.json \
+  --rescore-mode none
+```
+
+This stage:
+- reuses existing eval JSONs only
+- does not retrain
+- does not change labels, validation split, or metrics
+- writes reproducibility metadata (source paths + file hashes) in a manifest
+
+---
+
 ## 7. How to Select Best Checkpoint
 
 ```bash
@@ -165,6 +189,28 @@ Writes: `outputs/benchmarks/experiment_comparison_<experiment_id>.json`
 
 ---
 
+## 8b. How to Validate Result Provenance Manifest
+
+All baseline-replacement candidates must include a provenance manifest and pass:
+
+```bash
+python evals/check_manifest.py \
+  --manifest outputs/benchmarks/<manifest>.json \
+  --mode baseline-grade
+```
+
+For provisional-level checks:
+
+```bash
+python evals/check_manifest.py \
+  --manifest outputs/benchmarks/<manifest>.json \
+  --mode provisional
+```
+
+See `docs/baseline_manifest_policy.md` and `evals/manifest_schema.json`.
+
+---
+
 ## 9. When to Stop
 
 ### Stop Success
@@ -174,6 +220,7 @@ Writes: `outputs/benchmarks/experiment_comparison_<experiment_id>.json`
 - No protected paths modified
 - Dataset quality passed
 - Environment check passed
+- Manifest check passed (`baseline-grade` mode)
 
 ### Stop Fail
 - `max_trials_per_plan` (5) reached
@@ -253,4 +300,19 @@ python evals/compare_experiments.py \
 # Step 6: Gate
 python evals/gating.py --mode provisional --experiment-id EXP_NEW
 python evals/gating.py --mode target --experiment-id EXP_NEW
+
+# Step 7: Manifest check (required for baseline replacement)
+python evals/check_manifest.py \
+  --manifest outputs/benchmarks/<manifest_for_EXP_NEW>.json \
+  --mode baseline-grade
 ```
+
+---
+
+## 14. Baseline Replacement Rule
+
+A future result may replace the baseline only if **both** are true:
+1. Harness gate passes.
+2. Manifest check passes in `baseline-grade` mode.
+
+Until then, the historical baseline remains the official comparison anchor.
