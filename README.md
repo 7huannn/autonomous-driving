@@ -8,7 +8,7 @@ This repository presents a practical integration of camera-based semantic segmen
 
 ## Demo Preview
 <p align="center">
-  <img src="docs/demo.gif" alt="CARLA Perception Lab dashboard demo (V1 epoch 33 verified rerun)" width="960" />
+  <img src="docs/demo.gif?v=20260516-1544" alt="CARLA Perception Lab dashboard demo (V1 epoch 33 verified rerun)" width="960" />
 </p>
 <p align="center"><sub>Updated using verified V1 epoch-33 detection outputs (2026-05-16).</sub></p>
 
