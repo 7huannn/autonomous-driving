@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-16T00:26:26.483327+00:00",
+  "timestamp": "2026-05-16T08:07:22.069850+00:00",
   "python_executable": "/home/thuan/miniconda3/envs/pcdet/bin/python",
   "python_version": "3.8.19 | packaged by conda-forge | (default, Mar 20 2024, 12:47:35) \n[GCC 12.3.0]",
   "conda_env_detected": "pcdet",
@@ -23,7 +23,7 @@
     },
     "pcdet": {
       "importable": true,
-      "version": "0.6.0+233f849+pyc15302d",
+      "version": "0.6.0+233f849+py13ea3bd",
       "error": null
     }
   },
