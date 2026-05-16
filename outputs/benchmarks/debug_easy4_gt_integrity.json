@@ -1,0 +1,84 @@
+{
+  "dataset": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1",
+  "train_sample_ids_count": 16,
+  "val_sample_ids_count": 4,
+  "train_info_records": 16,
+  "val_info_records": 4,
+  "val_records_with_annos": 4,
+  "val_total_gt_boxes": 18,
+  "val_class_counts_from_info": {
+    "Pedestrian": 6,
+    "Vehicle": 12
+  },
+  "val_first_10_sample_ids": [
+    "000012",
+    "000013",
+    "000014",
+    "000015"
+  ],
+  "val_first_10_non_empty_info_records": [
+    {
+      "sample_id": "000012",
+      "num_gt": 4,
+      "classes": [
+        "Pedestrian",
+        "Vehicle",
+        "Vehicle",
+        "Vehicle"
+      ]
+    },
+    {
+      "sample_id": "000013",
+      "num_gt": 4,
+      "classes": [
+        "Pedestrian",
+        "Vehicle",
+        "Vehicle",
+        "Vehicle"
+      ]
+    },
+    {
+      "sample_id": "000014",
+      "num_gt": 5,
+      "classes": [
+        "Pedestrian",
+        "Pedestrian",
+        "Vehicle",
+        "Vehicle",
+        "Vehicle"
+      ]
+    },
+    {
+      "sample_id": "000015",
+      "num_gt": 5,
+      "classes": [
+        "Pedestrian",
+        "Pedestrian",
+        "Vehicle",
+        "Vehicle",
+        "Vehicle"
+      ]
+    }
+  ],
+  "val_info_first_10_ids": [
+    "000012",
+    "000013",
+    "000014",
+    "000015"
+  ],
+  "val_split_matches_info_ids": true,
+  "val_split_only_minus_info": [],
+  "info_only_minus_val_split": [],
+  "labels_exist_for_val_sample_ids": {
+    "000012": true,
+    "000013": true,
+    "000014": true,
+    "000015": true
+  },
+  "all_val_labels_exist": true,
+  "label_class_counts_from_val_labels": {
+    "Pedestrian": 6,
+    "Vehicle": 12
+  },
+  "label_class_names_subset_vehicle_pedestrian_cyclist": true
+}

@@ -1,0 +1,131 @@
+{
+  "experiment_id": "EASY4_FAILED",
+  "timestamp": "2026-05-16T00:08:06.558214+00:00",
+  "dataset_path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1",
+  "overall_pass": true,
+  "failures": [],
+  "warnings": [],
+  "checks": {
+    "path_exists": true,
+    "info_files": {
+      "custom_infos_train.pkl": {
+        "exists": true,
+        "size_bytes": 5462
+      },
+      "custom_infos_val.pkl": {
+        "exists": true,
+        "size_bytes": 1910
+      },
+      "custom_dbinfos_train.pkl": {
+        "exists": true,
+        "size_bytes": 6114
+      }
+    },
+    "imagesets": {
+      "dir_exists": true,
+      "train_split": {
+        "exists": true,
+        "count": 16
+      },
+      "val_split": {
+        "exists": true,
+        "count": 4
+      }
+    },
+    "sample_counts": {
+      "label_files": 20,
+      "point_cloud_files": 20,
+      "labels_dir_exists": true,
+      "points_dir_exists": true
+    },
+    "class_distribution": {
+      "readable_label_files": 20,
+      "unreadable_label_files": 0,
+      "classes": {
+        "Pedestrian": 22,
+        "Vehicle": 44
+      },
+      "total_annotations": 66
+    },
+    "point_stats": {
+      "num_files_checked": 4,
+      "min_points": 907,
+      "max_points": 941,
+      "mean_points": 920.0,
+      "zero_point_files": 0
+    },
+    "conversion_metadata": {
+      "manifest_exists": true,
+      "summary_exists": true,
+      "summary": {
+        "input_dir": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/raw/stage03_ped_strict20",
+        "input_dirs": [
+          "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/raw/stage03_ped_strict20"
+        ],
+        "output_dir": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1",
+        "num_source_datasets": 1,
+        "num_source_common_frames_total": 20,
+        "num_converted_frames": 20,
+        "start_index": 0,
+        "num_frames_requested_per_source": 0,
+        "train_ratio": 0.8,
+        "train_frames": 16,
+        "val_frames": 4,
+        "shuffle_split": false,
+        "seed": 42,
+        "point_cloud_range": [
+          -75.2,
+          -75.2,
+          -3.0,
+          75.2,
+          75.2,
+          4.0
+        ],
+        "lidar_transform_from_config": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 2.5,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "frames_with_filtered_non_finite_points": 0,
+        "frames_with_empty_labels": 0,
+        "total_labels_written": 66,
+        "empty_label_ratio": 0.0,
+        "label_class_histogram": {
+          "Vehicle": 44,
+          "Pedestrian": 22,
+          "Cyclist": 0
+        },
+        "min_points_per_class": {
+          "Vehicle": 1,
+          "Pedestrian": 2,
+          "Cyclist": 1
+        },
+        "labels_removed_by_min_points_total": 56,
+        "labels_removed_by_min_points_per_class": {
+          "Vehicle": 2,
+          "Pedestrian": 54,
+          "Cyclist": 0
+        },
+        "flip_point_y": true,
+        "sample_points_shape": [
+          845,
+          4
+        ],
+        "sample_points_dtype": "float32",
+        "infos_summary": {
+          "train_info_path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1/custom_infos_train.pkl",
+          "val_info_path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1/custom_infos_val.pkl",
+          "dbinfo_path": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/data/processed/pcdet_format_ped_strict20_easy4_v1/custom_dbinfos_train.pkl",
+          "db_counts": {
+            "Vehicle": 35,
+            "Pedestrian": 18,
+            "Cyclist": 0
+          }
+        }
+      }
+    }
+  }
+}

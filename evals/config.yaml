@@ -1,0 +1,18 @@
+# Legacy config reference
+# The primary experiment configuration is in experiment_config.yaml.
+# This file is retained for backward compatibility with existing scripts.
+
+# See experiment_config.yaml for:
+# - baseline definition
+# - target thresholds
+# - collapse detection rules
+# - resource limits
+# - protected paths
+
+experiment_config: experiment_config.yaml
+
+# Benchmark settings (used by benchmark.py)
+benchmark:
+  output_dir: outputs/benchmarks
+  report_format: json
+  include_timestamps: true

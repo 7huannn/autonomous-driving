@@ -1,0 +1,58 @@
+# ============================================================================
+# Experiment Configuration for CARLA Perception Lab
+# LiDAR 3D Detection Experiment-Aware Evaluation Harness
+# ============================================================================
+# This file is PROTECTED. Do not modify without updating the experiment
+# registry and documenting the change reason.
+# ============================================================================
+
+baseline:
+  name: canonical_mix_v3_fusion_rescore_best
+  result_file: output/detection_3d_canonical_mix_v3/eval_results_fusion_rescore_best.json
+  mAP: 0.4591
+  Vehicle_AP: 0.4736
+  Pedestrian_AP: 0.4445
+
+targets:
+  target_mAP: 0.60
+  min_delta_over_baseline: 0.01
+  min_vehicle_ap: 0.45
+  min_pedestrian_ap: 0.45
+
+collapse_detection:
+  # If best mAP < baseline * this fraction, declare collapse
+  fail_if_map_below_fraction_of_baseline: 0.50
+  # If any single class AP is below this, declare per-class collapse
+  fail_if_any_class_ap_below: 0.05
+
+resource_limits:
+  max_epochs_per_trial: 80
+  max_trials_per_plan: 5
+  max_no_improve_trials: 2
+  require_conda_env: pcdet
+  do_not_run_carla_and_training_together: true
+
+protected_paths:
+  - evals/protected_cases/
+  - evals/score.py
+  - evals/gating.py
+  - evals/experiment_config.yaml
+  - any ground-truth labels
+  - benchmark expected outputs
+
+# Known failed experiments (for reference, not to be repeated)
+known_failed:
+  - experiment_id: EASY4_FAILED
+    dataset: data/processed/pcdet_format_ped_strict20_easy4_v1
+    config: configs/carla_lidar_ped_strict20_easy4_v1.yaml
+    checkpoint_range: "51-80"
+    best_epoch: 65
+    best_mAP: 0.08397
+    failure_reason: >
+      Collapsed training: only 20 samples total (16 train / 4 val),
+      aggressive augmentation disabled, point cloud range too narrow,
+      and pedestrian anchor heights mismatched. Sweep-verified best is
+      epoch 65 (mAP=0.0840, Vehicle AP=0.0, Pedestrian AP=0.168).
+      Epoch 57 (mAP=0.0212) was previously cited but is not the sweep
+      peak. All epochs are far below baseline 0.4591. The branch must
+      not replace the global best.

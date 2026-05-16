@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-05-16T00:26:26.483327+00:00",
+  "python_executable": "/home/thuan/miniconda3/envs/pcdet/bin/python",
+  "python_version": "3.8.19 | packaged by conda-forge | (default, Mar 20 2024, 12:47:35) \n[GCC 12.3.0]",
+  "conda_env_detected": "pcdet",
+  "expected_conda_env": "pcdet",
+  "conda_env_match": true,
+  "packages": {
+    "easydict": {
+      "importable": true,
+      "version": "unknown",
+      "error": null
+    },
+    "numpy": {
+      "importable": true,
+      "version": "1.24.4",
+      "error": null
+    },
+    "torch": {
+      "importable": true,
+      "version": "1.13.1+cu116",
+      "error": null
+    },
+    "pcdet": {
+      "importable": true,
+      "version": "0.6.0+233f849+pyc15302d",
+      "error": null
+    }
+  },
+  "pcdet_import_ok": true,
+  "overall_pass": true,
+  "failures": [],
+  "numpy_version": "1.24.4",
+  "torch_version": "1.13.1+cu116",
+  "torch_cuda_available": true,
+  "torch_cuda_device": "NVIDIA GeForce RTX 4060 Laptop GPU"
+}

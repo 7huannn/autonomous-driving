@@ -1,0 +1,20 @@
+{
+  "experiment_id": "EXP_MISSING_METRICS_TEST",
+  "timestamp": "2026-05-16T00:29:41.927791+00:00",
+  "current": {
+    "mAP": null,
+    "Vehicle_AP": null,
+    "Pedestrian_AP": null
+  },
+  "baseline": {
+    "mAP": 0.45907618116838617,
+    "Vehicle_AP": 0.4736493487302198,
+    "Pedestrian_AP": 0.44450301360655253
+  },
+  "previous": null,
+  "deltas": {},
+  "pass_fail": "fail",
+  "overall_pass": false,
+  "status": "no_valid_current_metrics",
+  "reason": "current experiment has no valid mAP"
+}

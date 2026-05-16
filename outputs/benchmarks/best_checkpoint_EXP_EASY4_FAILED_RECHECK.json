@@ -1,0 +1,23 @@
+{
+  "experiment_id": "EXP_EASY4_FAILED_RECHECK",
+  "timestamp": "2026-05-16T00:41:25.048469+00:00",
+  "sweep_file": "outputs/benchmarks/checkpoint_sweep_EXP_EASY4_FAILED_RECHECK.json",
+  "total_epochs_evaluated": 30,
+  "successful_epochs": 30,
+  "best_epoch": 51,
+  "best_mAP": 0.0,
+  "Vehicle_AP": 0.0,
+  "Pedestrian_AP": 0.0,
+  "best_result_file": "/media/thuan/Workspace/Hoc_Ki_Cuoi/autonomous-driving/carla-perception-lab/output/detection_3d_EXP_EASY4_FAILED_RECHECK/eval_results_e51.json",
+  "baseline_mAP": 0.4591,
+  "baseline_Vehicle_AP": 0.4736,
+  "baseline_Pedestrian_AP": 0.4445,
+  "target_mAP": 0.6,
+  "delta_mAP": -0.4591,
+  "relative_delta_mAP": -1.0,
+  "target_reached": false,
+  "improves_baseline": false,
+  "collapse_detected": true,
+  "collapse_reason": "mAP 0.000000 < 50% of baseline (0.229550); Vehicle AP 0.000000 < 0.05; Pedestrian AP 0.000000 < 0.05",
+  "status": "collapsed"
+}

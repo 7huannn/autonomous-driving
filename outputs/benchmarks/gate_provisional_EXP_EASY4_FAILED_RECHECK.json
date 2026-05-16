@@ -1,0 +1,32 @@
+{
+  "experiment_id": "EXP_EASY4_FAILED_RECHECK",
+  "mode": "provisional",
+  "timestamp": "2026-05-16T00:41:47.552762+00:00",
+  "checks": {
+    "best_checkpoint_exists": true,
+    "experiment_comparison_exists": true,
+    "env_check_exists": true,
+    "dataset_quality_exists": true,
+    "env_passed": true,
+    "dataset_passed": true,
+    "current_mAP": 0.0,
+    "current_Vehicle_AP": 0.0,
+    "current_Pedestrian_AP": 0.0,
+    "collapse_detected": true,
+    "improves_baseline": false,
+    "reaches_target": false,
+    "protected_paths_ok": true
+  },
+  "overall_pass": false,
+  "failures": [
+    "Collapse detected: mAP 0.000000 < 50% of baseline (0.229550); Vehicle AP 0.000000 < 0.05; Pedestrian AP 0.000000 < 0.05",
+    "mAP 0.000000 does not improve baseline 0.4591 by min delta 0.01",
+    "COLLAPSE: mAP 0.000000 < 50% of baseline",
+    "COLLAPSE: Vehicle AP 0.000000 < 0.05",
+    "COLLAPSE: Pedestrian AP 0.000000 < 0.05"
+  ],
+  "warnings": [
+    "Vehicle AP 0.000000 < min 0.45",
+    "Pedestrian AP 0.000000 < min 0.45"
+  ]
+}

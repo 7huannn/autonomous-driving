@@ -1,0 +1,28 @@
+{
+  "experiment_id": "EASY4_FAILED",
+  "timestamp": "2026-05-16T00:09:22.374963+00:00",
+  "current": {
+    "mAP": 0.0839743614775869,
+    "Vehicle_AP": 0.0,
+    "Pedestrian_AP": 0.1679487229551738
+  },
+  "baseline": {
+    "mAP": 0.45907618116838617,
+    "Vehicle_AP": 0.4736493487302198,
+    "Pedestrian_AP": 0.44450301360655253
+  },
+  "previous": null,
+  "deltas": {
+    "mAP_absolute": -0.37510181969079925,
+    "mAP_relative": -0.8170796810588924,
+    "Vehicle_AP_absolute": -0.4736493487302198,
+    "Vehicle_AP_relative": -1.0,
+    "Pedestrian_AP_absolute": -0.2765542906513787,
+    "Pedestrian_AP_relative": -0.6221651646577318
+  },
+  "pass_fail": "fail",
+  "reason": [
+    "COLLAPSE: mAP 0.083974 < 0.229550",
+    "COLLAPSE: Vehicle_AP 0.000000 < 0.05"
+  ]
+}

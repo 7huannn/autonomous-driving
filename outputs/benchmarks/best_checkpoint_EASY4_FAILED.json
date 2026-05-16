@@ -1,0 +1,23 @@
+{
+  "experiment_id": "EASY4_FAILED",
+  "timestamp": "2026-05-16T00:08:59.139928+00:00",
+  "sweep_file": "outputs/benchmarks/checkpoint_sweep_EASY4_FAILED.json",
+  "total_epochs_evaluated": 30,
+  "successful_epochs": 30,
+  "best_epoch": 65,
+  "best_mAP": 0.0839743614775869,
+  "Vehicle_AP": 0.0,
+  "Pedestrian_AP": 0.1679487229551738,
+  "best_result_file": "output/detection_3d_ped_strict20_easy4_v1/eval_results_e65.json",
+  "baseline_mAP": 0.4591,
+  "baseline_Vehicle_AP": 0.4736,
+  "baseline_Pedestrian_AP": 0.4445,
+  "target_mAP": 0.6,
+  "delta_mAP": -0.3751256385224131,
+  "relative_delta_mAP": -0.8170891712533502,
+  "target_reached": false,
+  "improves_baseline": false,
+  "collapse_detected": true,
+  "collapse_reason": "mAP 0.083974 < 50% of baseline (0.229550); Vehicle AP 0.000000 < 0.05",
+  "status": "collapsed"
+}
