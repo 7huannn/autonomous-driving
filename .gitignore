@@ -1,6 +1,7 @@
 # Data and outputs
 data/
 output/
+outputs/benchmarks/
 *.npy
 *.bin
 *.pth
