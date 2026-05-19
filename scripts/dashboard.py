@@ -75,7 +75,7 @@ class SensorRig:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate Stage 09 dashboard frames/video from canonical outputs")
-    parser.add_argument("--mode", choices=("frames", "video", "both"), default="both", help="Output mode")
+    parser.add_argument("--mode", choices=("frames", "video", "both", "world_model"), default="both", help="Output mode")
     parser.add_argument("--rgb-dir", type=Path, default=Path("data/raw/recording_001/rgb"), help="RGB frame directory")
     parser.add_argument("--seg-dir", type=Path, default=Path("output/segmentation/predictions"), help="Segmentation prediction directory")
     parser.add_argument(
@@ -102,6 +102,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--allow-partial-alignment", action="store_true", help="Use stem intersection instead of strict equality")
     parser.add_argument("--skip-projection", action="store_true", help="Skip 3D projection onto camera view")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite frame/video outputs")
+    parser.add_argument("--wm-current-rgb-dir", type=Path, default=None, help="Stage 13 current RGB directory")
+    parser.add_argument("--wm-recon-dir", type=Path, default=None, help="Stage 13 VAE reconstruction directory")
+    parser.add_argument("--wm-dream-dir", type=Path, default=None, help="Stage 13 dream frame directory")
+    parser.add_argument("--wm-metrics-json", type=Path, default=None, help="Stage 13 metrics JSON for text panel")
     return parser.parse_args()
 
 
@@ -563,8 +567,141 @@ def create_video_writer(path: Path, fps: float, size: tuple[int, int]) -> cv2.Vi
     raise RuntimeError("Failed to open video writer with codecs: avc1, mp4v, XVID")
 
 
+def world_model_stems(current_rgb_dir: Path, recon_dir: Path, dream_dir: Path) -> list[str]:
+    rgb = {p.stem for p in current_rgb_dir.glob("*.png")}
+    rec = {p.stem for p in recon_dir.glob("*.png")}
+    dream = {p.stem for p in dream_dir.glob("*.png")}
+    stems = sorted(rgb & rec & dream)
+    if not stems:
+        raise RuntimeError("No aligned world-model frames found among current/recon/dream dirs")
+    return stems
+
+
+def world_model_metrics_lines(metrics_json: Path | None) -> list[str]:
+    if metrics_json is None or not metrics_json.exists():
+        return ["WORLD MODEL METRICS", "No metrics JSON provided"]
+    data = read_json(metrics_json)
+    lines = ["WORLD MODEL METRICS"]
+    for key in ("mean_planner_pred_reward", "mean_random_pred_reward", "planner_beats_random", "episodes", "horizon", "generations"):
+        if key in data:
+            lines.append(f"{key}: {data[key]}")
+    if len(lines) == 1:
+        lines.append("Metrics JSON found but keys are missing")
+    return lines
+
+
+def compose_world_model_dashboard(
+    current_rgb: np.ndarray,
+    reconstruction: np.ndarray,
+    dream: np.ndarray,
+    lines: list[str],
+    args: argparse.Namespace,
+    frame_idx: int,
+    total_frames: int,
+    stem: str,
+) -> np.ndarray:
+    canvas = np.full((args.height, args.width, 3), 12, dtype=np.uint8)
+    half_w = args.width // 2
+    half_h = args.height // 2
+
+    panel1 = fit_image(current_rgb, half_w - 20, half_h - 40)
+    panel2 = fit_image(reconstruction, half_w - 20, half_h - 40)
+    panel3 = fit_image(dream, half_w - 20, half_h - 40)
+    panel4 = np.full((half_h, half_w, 3), 20, dtype=np.uint8)
+
+    draw_text_block(panel4, [f"Frame: {frame_idx + 1}/{total_frames}", f"Stem: {stem}", *lines], (12, 28))
+
+    canvas[28 : 28 + panel1.shape[0], 10 : 10 + panel1.shape[1]] = panel1
+    canvas[28 : 28 + panel2.shape[0], half_w + 10 : half_w + 10 + panel2.shape[1]] = panel2
+    canvas[half_h + 20 : half_h + 20 + panel3.shape[0], 10 : 10 + panel3.shape[1]] = panel3
+    canvas[half_h + 20 : half_h + 20 + panel4.shape[0], half_w : half_w + panel4.shape[1]] = panel4
+
+    cv2.putText(canvas, "Current RGB", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (230, 230, 230), 2, cv2.LINE_AA)
+    cv2.putText(canvas, "VAE Reconstruction", (half_w + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (230, 230, 230), 2, cv2.LINE_AA)
+    cv2.putText(canvas, "Dream Future", (10, half_h + 14), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (230, 230, 230), 2, cv2.LINE_AA)
+    cv2.putText(canvas, "Planner Trace", (half_w + 10, half_h + 14), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (230, 230, 230), 2, cv2.LINE_AA)
+    return canvas
+
+
+def run_world_model_dashboard(args: argparse.Namespace) -> int:
+    if args.wm_current_rgb_dir is None or args.wm_recon_dir is None or args.wm_dream_dir is None:
+        raise RuntimeError("world_model mode requires --wm-current-rgb-dir --wm-recon-dir --wm-dream-dir")
+
+    current_rgb_dir = args.wm_current_rgb_dir.resolve()
+    recon_dir = args.wm_recon_dir.resolve()
+    dream_dir = args.wm_dream_dir.resolve()
+    args.output = args.output.resolve()
+    args.output_dir = args.output_dir.resolve()
+    args.report_json = args.report_json.resolve()
+    metrics_json = args.wm_metrics_json.resolve() if args.wm_metrics_json is not None else None
+    stems = world_model_stems(current_rgb_dir, recon_dir, dream_dir)
+    lines = world_model_metrics_lines(metrics_json)
+
+    if args.num_frames > 0:
+        stems = stems[: args.num_frames]
+    if args.start_index > 0:
+        stems = stems[args.start_index :]
+    if not stems:
+        raise RuntimeError("No world-model stems selected")
+
+    if args.output_dir.exists() and args.overwrite:
+        for p in args.output_dir.glob("*.png"):
+            p.unlink()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.output.exists() and args.overwrite:
+        args.output.unlink()
+    if args.output.exists() and not args.overwrite:
+        raise FileExistsError(f"Output video exists: {args.output}. Pass --overwrite")
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+
+    writer = create_video_writer(path=args.output, fps=args.fps, size=(args.width, args.height))
+    frames_written = 0
+    try:
+        for i, stem in enumerate(stems):
+            rgb = cv2.imread(str(current_rgb_dir / f"{stem}.png"), cv2.IMREAD_COLOR)
+            rec = cv2.imread(str(recon_dir / f"{stem}.png"), cv2.IMREAD_COLOR)
+            dream = cv2.imread(str(dream_dir / f"{stem}.png"), cv2.IMREAD_COLOR)
+            if rgb is None or rec is None or dream is None:
+                raise RuntimeError(f"Failed to load world-model panel frame: {stem}")
+
+            frame = compose_world_model_dashboard(
+                current_rgb=rgb,
+                reconstruction=rec,
+                dream=dream,
+                lines=lines,
+                args=args,
+                frame_idx=i,
+                total_frames=len(stems),
+                stem=stem,
+            )
+            cv2.imwrite(str(args.output_dir / f"{stem}.png"), frame)
+            writer.write(frame)
+            frames_written += 1
+    finally:
+        writer.release()
+
+    report = {
+        "mode": "world_model",
+        "num_frames": int(frames_written),
+        "current_rgb_dir": str(current_rgb_dir),
+        "recon_dir": str(recon_dir),
+        "dream_dir": str(dream_dir),
+        "output_video": str(args.output),
+        "output_frames": str(args.output_dir),
+        "metrics_json": str(metrics_json) if metrics_json is not None else None,
+    }
+    args.report_json.parent.mkdir(parents=True, exist_ok=True)
+    args.report_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(json.dumps(report, indent=2))
+    print(f"[PASS] world-model dashboard report saved: {args.report_json}")
+    return 0
+
+
 def main() -> int:
     args = parse_args()
+    if args.mode == "world_model":
+        return run_world_model_dashboard(args)
 
     args.rgb_dir = args.rgb_dir.resolve()
     args.seg_dir = args.seg_dir.resolve()

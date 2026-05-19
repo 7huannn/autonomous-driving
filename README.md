@@ -21,6 +21,11 @@ This repository presents a practical integration of camera-based semantic segmen
 - Benchmarking utilities with latency/FPS/VRAM and evaluation metric aggregation.
 - Local offline inference/deployment scripts for reproducible execution without active CARLA runtime.
 
+### Stage 13 EPLS Modes
+- `configs/world_model.yaml` defines `stage13.mode` as one of `offline`, `live_planning`, `iterative`.
+- Only `offline` is compatible with the original perception-only scope.
+- `live_planning` and `iterative` CLIs require explicit `--allow-stage13-control`.
+
 ## System Overview
 ```mermaid
 flowchart LR

@@ -46,3 +46,6 @@ tb_logs/
 final_plan/
 AGENT_FINAL_PLAN_PROMPT.md
 STAGE_TEMPLATE.md
+
+# Codex local artifacts
+.codex-plugin

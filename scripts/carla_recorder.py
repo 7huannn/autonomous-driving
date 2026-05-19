@@ -19,6 +19,23 @@ import cv2
 import numpy as np
 import yaml
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = REPO_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from world_model import ensure_stage13_scope, load_yaml_config
+from world_model.reward import (
+    RewardConfig,
+    TerminalConfig,
+    TerminalState,
+    advance_terminal_state,
+    compute_reward,
+    progress_m_from_locations,
+    speed_kmh_from_velocity,
+    terminal_decision,
+)
+
 
 LOGGER = logging.getLogger("carla_recorder")
 SENSOR_NAMES = ("rgb_camera", "semantic_camera", "lidar")
@@ -29,6 +46,17 @@ class SensorPacket:
     name: str
     frame: int
     data: Any
+
+
+@dataclass
+class WorldModelRuntime:
+    reward_cfg: RewardConfig
+    terminal_cfg: TerminalConfig
+    collision_intensity_scale: float
+    enable_collision_sensor: bool
+    enable_lane_invasion_sensor: bool
+    mode: str
+    policy: str
 
 
 def parse_args() -> argparse.Namespace:
@@ -72,6 +100,21 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Load and validate config, then exit without connecting to CARLA.",
     )
+    parser.add_argument(
+        "--world-model-config",
+        default="configs/world_model.yaml",
+        help="Path to Stage 13 world-model config for reward/terminal + scope-gating",
+    )
+    parser.add_argument(
+        "--allow-stage13-control",
+        action="store_true",
+        help="Required when world-model stage13.mode is live_planning or iterative.",
+    )
+    parser.add_argument(
+        "--policy",
+        default="autopilot_noise",
+        help="Policy label written into recording summary and rollout manifest inputs.",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for actor spawning")
     parser.add_argument("--log-level", default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
     return parser.parse_args()
@@ -94,6 +137,36 @@ def deep_get(config: dict[str, Any], *keys: str, default: Any = None) -> Any:
             return default
         current = current[key]
     return current
+
+
+def load_world_model_runtime(
+    world_model_config_path: Path,
+    sensor_config: dict[str, Any],
+    allow_stage13_control: bool,
+    policy: str,
+) -> WorldModelRuntime:
+    wm_cfg = load_yaml_config(world_model_config_path)
+    mode = ensure_stage13_scope(wm_cfg, allow_stage13_control=allow_stage13_control)
+
+    reward_cfg = wm_cfg.get("reward", {}) if isinstance(wm_cfg.get("reward"), dict) else {}
+    terminal_cfg = wm_cfg.get("terminal", {}) if isinstance(wm_cfg.get("terminal"), dict) else {}
+    recording_events = deep_get(sensor_config, "recording", "world_model_events", default={}) or {}
+    recording_terminal = deep_get(sensor_config, "recording", "world_model_terminal", default={}) or {}
+
+    terminal_merged = dict(terminal_cfg)
+    terminal_merged.update({k: v for k, v in recording_terminal.items() if v is not None})
+
+    return WorldModelRuntime(
+        reward_cfg=RewardConfig(**{k: reward_cfg.get(k, getattr(RewardConfig(), k)) for k in RewardConfig.__dataclass_fields__}),
+        terminal_cfg=TerminalConfig(
+            **{k: terminal_merged.get(k, getattr(TerminalConfig(), k)) for k in TerminalConfig.__dataclass_fields__}
+        ),
+        collision_intensity_scale=float(recording_events.get("collision_intensity_scale", 0.01)),
+        enable_collision_sensor=bool(recording_events.get("enable_collision_sensor", False)),
+        enable_lane_invasion_sensor=bool(recording_events.get("enable_lane_invasion_sensor", False)),
+        mode=mode,
+        policy=str(policy),
+    )
 
 
 def apply_overrides(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
@@ -255,6 +328,7 @@ def validate_recording_integrity(output_dir: Path, expected_frames: int) -> dict
     sensor_sync_all = True
     invalid_meta_files = 0
     missing_sensor_frame_keys = 0
+    missing_world_model_fields = 0
     prev_ts = -1.0
 
     for stem in sorted(common_stems):
@@ -274,12 +348,30 @@ def validate_recording_integrity(output_dir: Path, expected_frames: int) -> dict
                 values = [int(sf[name]) for name in SENSOR_NAMES]
                 if not (values[0] == values[1] == values[2]):
                     sensor_sync_all = False
+
+            control = meta.get("control", {})
+            telemetry = meta.get("telemetry", {})
+            world_model = meta.get("world_model", {})
+            valid_control = isinstance(control, dict) and all(k in control for k in ("steer", "throttle", "brake"))
+            valid_telemetry = isinstance(telemetry, dict) and all(
+                k in telemetry for k in ("speed_kmh", "progress_m", "collision_intensity", "lane_invasion", "offroad", "stuck")
+            )
+            valid_world_model = isinstance(world_model, dict) and "reward" in world_model and "done" in world_model
+            if not (valid_control and valid_telemetry and valid_world_model):
+                missing_world_model_fields += 1
         except Exception:
             invalid_meta_files += 1
             timestamps_monotonic = False
             sensor_sync_all = False
 
-    complete = aligned and timestamps_monotonic and sensor_sync_all and invalid_meta_files == 0 and missing_sensor_frame_keys == 0
+    complete = (
+        aligned
+        and timestamps_monotonic
+        and sensor_sync_all
+        and invalid_meta_files == 0
+        and missing_sensor_frame_keys == 0
+        and missing_world_model_fields == 0
+    )
     return {
         "pass": bool(complete),
         "expected_frames": int(expected_frames),
@@ -290,6 +382,7 @@ def validate_recording_integrity(output_dir: Path, expected_frames: int) -> dict
         "sensor_sync_all": bool(sensor_sync_all),
         "invalid_meta_files": int(invalid_meta_files),
         "missing_sensor_frame_keys": int(missing_sensor_frame_keys),
+        "missing_world_model_fields": int(missing_world_model_fields),
     }
 
 
@@ -401,6 +494,9 @@ def write_metadata(
     timestamp: float,
     ego_state: dict[str, Any],
     sensor_frames: dict[str, int],
+    control: dict[str, Any],
+    telemetry: dict[str, Any],
+    world_model: dict[str, Any],
     actors: list[dict[str, Any]] | None = None,
 ) -> None:
     metadata = {
@@ -408,6 +504,9 @@ def write_metadata(
         "timestamp": timestamp,
         "sensor_frames": sensor_frames,
         "ego_vehicle": ego_state,
+        "control": control,
+        "telemetry": telemetry,
+        "world_model": world_model,
         "actors": actors or [],
     }
     with path.open("w", encoding="utf-8") as handle:
@@ -639,6 +738,41 @@ def spawn_sensors(carla: Any, world: Any, ego_vehicle: Any, config: dict[str, An
     return sensors, queues
 
 
+def spawn_event_sensors(
+    world: Any,
+    ego_vehicle: Any,
+    runtime: WorldModelRuntime,
+) -> tuple[list[Any], dict[str, Any]]:
+    sensors: list[Any] = []
+    state = {"collision_intensity": 0.0, "lane_invasion": False}
+    library = world.get_blueprint_library()
+
+    if runtime.enable_collision_sensor:
+        collision_bp = library.find("sensor.other.collision")
+        collision_sensor = world.spawn_actor(collision_bp, ego_vehicle.get_transform(), attach_to=ego_vehicle)
+
+        def on_collision(event: Any) -> None:
+            impulse = event.normal_impulse
+            magnitude = (impulse.x**2 + impulse.y**2 + impulse.z**2) ** 0.5
+            scaled = magnitude * runtime.collision_intensity_scale
+            state["collision_intensity"] = max(float(state["collision_intensity"]), float(scaled))
+
+        collision_sensor.listen(on_collision)
+        sensors.append(collision_sensor)
+
+    if runtime.enable_lane_invasion_sensor:
+        lane_bp = library.find("sensor.other.lane_invasion")
+        lane_sensor = world.spawn_actor(lane_bp, ego_vehicle.get_transform(), attach_to=ego_vehicle)
+
+        def on_lane_invasion(_event: Any) -> None:
+            state["lane_invasion"] = True
+
+        lane_sensor.listen(on_lane_invasion)
+        sensors.append(lane_sensor)
+
+    return sensors, state
+
+
 def carla_server_alive(client: Any) -> bool:
     try:
         client.get_world().get_snapshot()
@@ -703,7 +837,13 @@ def cleanup_actors(carla: Any, client: Any, sensors: list[Any], controllers: lis
         LOGGER.warning("Failed to batch-destroy actors: %s", exc)
 
 
-def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int) -> dict[str, Any]:
+def record(
+    config: dict[str, Any],
+    output_dir: Path,
+    overwrite: bool,
+    seed: int,
+    world_model_runtime: WorldModelRuntime,
+) -> dict[str, Any]:
     carla = import_carla()
     prepare_output_dir(output_dir, overwrite)
 
@@ -755,6 +895,7 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
 
     ego_vehicle = None
     sensors = []
+    event_sensors: list[Any] = []
     traffic = []
     walkers = []
     controllers = []
@@ -790,11 +931,19 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
         walkers, controllers = spawn_walkers(carla, client, world, traffic_walkers, seed)
         all_spawned_actors.extend(walkers)
         sensors, queues = spawn_sensors(carla, world, ego_vehicle, config)
+        event_sensors, event_state = spawn_event_sensors(world, ego_vehicle, world_model_runtime)
+        all_spawned_actors.extend(event_sensors)
 
         for _ in range(warmup_ticks):
             world.tick() if use_synchronous_mode else world.wait_for_tick()
 
         last_ego_state: dict[str, Any] | None = None
+        last_control: dict[str, Any] | None = None
+        terminal_state = TerminalState()
+        prev_location: dict[str, float] | None = None
+        lane_invasion_total = 0
+        offroad_total = 0
+        done_total = 0
 
         last_timestamp = -1.0
         started = time.monotonic()
@@ -840,6 +989,69 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
                     ego_state["state_valid"] = False
                     ego_state["state_error"] = str(exc)
 
+                ctrl = ego_vehicle.get_control()
+                control = {
+                    "steer": float(ctrl.steer),
+                    "throttle": float(ctrl.throttle),
+                    "brake": float(ctrl.brake),
+                    "reverse": bool(ctrl.reverse),
+                    "hand_brake": bool(ctrl.hand_brake),
+                    "manual_gear_shift": bool(ctrl.manual_gear_shift),
+                }
+                steer_delta = 0.0
+                if last_control is not None:
+                    steer_delta = float(control["steer"]) - float(last_control["steer"])
+                last_control = control
+
+                location = ego_state.get("location", {})
+                velocity = ego_state.get("velocity", {})
+                speed_kmh = speed_kmh_from_velocity(velocity if isinstance(velocity, dict) else {})
+                progress_m = progress_m_from_locations(
+                    prev_location,
+                    location if isinstance(location, dict) else {"x": 0.0, "y": 0.0, "z": 0.0},
+                )
+                prev_location = location if isinstance(location, dict) else None
+
+                offroad = False
+                try:
+                    waypoint = world.get_map().get_waypoint(ego_vehicle.get_location(), project_to_road=False)
+                    offroad = waypoint is None
+                except Exception:
+                    offroad = False
+                lane_invasion = bool(event_state.get("lane_invasion", False))
+                collision_intensity = float(event_state.get("collision_intensity", 0.0))
+
+                terminal_state = advance_terminal_state(
+                    prev_state=terminal_state,
+                    collision_intensity=collision_intensity,
+                    speed_kmh=speed_kmh,
+                    lane_invasion=lane_invasion,
+                    offroad=offroad,
+                    cfg=world_model_runtime.terminal_cfg,
+                )
+                telemetry = {
+                    "speed_kmh": float(speed_kmh),
+                    "progress_m": float(progress_m),
+                    "collision_intensity": float(collision_intensity),
+                    "lane_invasion": bool(lane_invasion),
+                    "offroad": bool(offroad),
+                    "stuck": bool(terminal_state.stuck_frames >= world_model_runtime.terminal_cfg.stuck_frames_threshold),
+                }
+                reward_value = compute_reward(telemetry=telemetry, steer_delta=steer_delta, cfg=world_model_runtime.reward_cfg)
+                done, done_reason = terminal_decision(
+                    state=terminal_state,
+                    cfg=world_model_runtime.terminal_cfg,
+                    rollout_end=(frame_index + 1 == num_frames),
+                )
+                world_model = {
+                    "reward": float(reward_value),
+                    "done": bool(done),
+                    "done_reason": done_reason,
+                }
+                lane_invasion_total += int(lane_invasion)
+                offroad_total += int(offroad)
+                done_total += int(done)
+
                 save_camera_image(sensor_data["rgb_camera"], output_dir / "rgb" / f"{stem}.png")
                 save_camera_image(sensor_data["semantic_camera"], output_dir / "semantic" / f"{stem}.png")
                 lidar_points = save_lidar(sensor_data["lidar"], output_dir / "lidar" / f"{stem}.npy")
@@ -855,8 +1067,13 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
                     timestamp=timestamp,
                     ego_state=ego_state,
                     sensor_frames={name: int(sensor_data[name].frame) for name in SENSOR_NAMES},
+                    control=control,
+                    telemetry=telemetry,
+                    world_model=world_model,
                     actors=actor_records,
                 )
+                event_state["collision_intensity"] = 0.0
+                event_state["lane_invasion"] = False
             except Exception as exc:
                 raise RuntimeError(
                     f"frame write failed at frame_index={frame_index}, frame={frame}: {exc}"
@@ -891,6 +1108,17 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
                 "warmup_ticks": warmup_ticks,
                 "sensor_timeout": sensor_timeout,
                 "startup_wait_seconds": startup_wait_seconds,
+                "world_model": {
+                    "policy": world_model_runtime.policy,
+                    "stage13_mode": world_model_runtime.mode,
+                    "reward_config": world_model_runtime.reward_cfg.__dict__,
+                    "terminal_config": world_model_runtime.terminal_cfg.__dict__,
+                    "events": {
+                        "enable_collision_sensor": world_model_runtime.enable_collision_sensor,
+                        "enable_lane_invasion_sensor": world_model_runtime.enable_lane_invasion_sensor,
+                        "collision_intensity_scale": world_model_runtime.collision_intensity_scale,
+                    },
+                },
             },
         )
         integrity = validate_recording_integrity(output_dir=output_dir, expected_frames=num_frames)
@@ -923,6 +1151,15 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
                 "prefer_cyclist_vehicles": prefer_cyclist_vehicles,
                 "native_recorder": native_recorder,
                 "use_synchronous_mode": use_synchronous_mode,
+            },
+            "world_model": {
+                "stage13_mode": world_model_runtime.mode,
+                "policy": world_model_runtime.policy,
+                "reward_version": "carla_progress_v1",
+                "terminal_version": "carla_terminal_v1",
+                "lane_invasion_frames": lane_invasion_total,
+                "offroad_frames": offroad_total,
+                "done_frames": done_total,
             },
             "artifacts": {
                 "scenario_file": str(scenario_file),
@@ -968,13 +1205,14 @@ def record(config: dict[str, Any], output_dir: Path, overwrite: bool, seed: int)
                 LOGGER.warning("Failed to restore world settings: %s", exc)
 
 
-def print_config_summary(config: dict[str, Any], output_dir: Path) -> None:
+def print_config_summary(config: dict[str, Any], output_dir: Path, world_model_runtime: WorldModelRuntime) -> None:
     print("[PASS] Config loaded")
     print(f"output_dir: {output_dir}")
     print(f"num_frames: {deep_get(config, 'recording', 'num_frames')}")
     print(f"carla: {deep_get(config, 'carla', 'host')}:{deep_get(config, 'carla', 'port')}")
     print(f"map: {deep_get(config, 'carla', 'map')}")
     print(f"weather: {deep_get(config, 'carla', 'weather')}")
+    print(f"stage13_mode: {world_model_runtime.mode}")
     for sensor_name in SENSOR_NAMES:
         attrs = deep_get(config, "sensors", sensor_name, "attributes", default={})
         print(f"{sensor_name}: {deep_get(config, 'sensors', sensor_name, 'blueprint')} attrs={attrs}")
@@ -987,11 +1225,23 @@ def main() -> int:
     try:
         config = apply_overrides(load_config(Path(args.config)), args)
         validate_config(config)
+        world_model_runtime = load_world_model_runtime(
+            world_model_config_path=Path(args.world_model_config),
+            sensor_config=config,
+            allow_stage13_control=bool(args.allow_stage13_control),
+            policy=str(args.policy),
+        )
         output_dir = resolve_output_dir(config)
         if args.check_config:
-            print_config_summary(config, output_dir)
+            print_config_summary(config, output_dir, world_model_runtime)
             return 0
-        summary = record(config, output_dir, overwrite=args.overwrite, seed=args.seed)
+        summary = record(
+            config,
+            output_dir,
+            overwrite=args.overwrite,
+            seed=args.seed,
+            world_model_runtime=world_model_runtime,
+        )
     except Exception as exc:
         LOGGER.error("%s", exc)
         return 1
@@ -1002,6 +1252,7 @@ def main() -> int:
     print(f"frames_recorded: {summary['frames_recorded']}")
     print(f"traffic_vehicles_spawned: {summary['traffic']['vehicles_spawned']}")
     print(f"traffic_walkers_spawned: {summary['traffic']['walkers_spawned']}")
+    print(f"stage13_mode: {summary['world_model']['stage13_mode']}")
     print(f"complete: {summary['complete']}")
     return 0
 

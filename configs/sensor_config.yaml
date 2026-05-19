@@ -53,3 +53,13 @@ recording:
   warmup_ticks: 5
   sensor_timeout: 5.0
   native_recorder: false
+  world_model_events:
+    enable_collision_sensor: false
+    enable_lane_invasion_sensor: false
+    collision_intensity_scale: 0.01
+  world_model_terminal:
+    stuck_speed_kmh_threshold: 1.0
+    stuck_frames_threshold: 20
+    lane_invasion_frames_threshold: 5
+    offroad_frames_threshold: 5
+    collision_intensity_threshold: 0.75
