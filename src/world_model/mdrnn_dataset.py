@@ -27,7 +27,7 @@ def discover_latent_rollouts(latent_dir: Path) -> list[Path]:
     return rollouts
 
 
-class MDRNNDataset(Dataset[dict[str, Tensor]]):
+class MDRNNDataset(Dataset):
     def __init__(self, latent_rollout_dirs: list[Path], sequence_length: int = 100, stride: int = 1) -> None:
         self.sequence_length = int(sequence_length)
         self.stride = int(stride)

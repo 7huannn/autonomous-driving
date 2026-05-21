@@ -1,0 +1,79 @@
+carla:
+  host: localhost
+  port: 2000
+  timeout: 10.0
+  startup_wait_seconds: 30.0
+  map: Mine_01
+  weather: ClearNoon
+  quality: Low
+  tm_port: 10000
+  resolution:
+    width: 256
+    height: 144
+sensors:
+  rgb_camera:
+    blueprint: sensor.camera.rgb
+    transform:
+      x: 1.5
+      y: 0.0
+      z: 2.4
+      pitch: 0.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      image_size_x: 256
+      image_size_y: 144
+      fov: 110
+      sensor_tick: 0.1
+  semantic_camera:
+    blueprint: sensor.camera.semantic_segmentation
+    transform:
+      x: 1.5
+      y: 0.0
+      z: 2.4
+      pitch: 0.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      image_size_x: 256
+      image_size_y: 144
+      fov: 110
+      sensor_tick: 0.1
+  lidar:
+    blueprint: sensor.lidar.ray_cast
+    transform:
+      x: 0.0
+      y: 0.0
+      z: 2.5
+      pitch: 0.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      channels: 32
+      points_per_second: 20000
+      rotation_frequency: 10
+      range: 100
+      upper_fov: 10
+      lower_fov: -30
+      sensor_tick: 0.1
+recording:
+  num_frames: 150
+  output_dir: data/raw/recording_001
+  traffic_vehicles: 6
+  traffic_walkers: 6
+  prefer_cyclist_vehicles: 0
+  use_synchronous_mode: true
+  fixed_delta_seconds: 0.1
+  warmup_ticks: 5
+  sensor_timeout: 8.0
+  native_recorder: false
+  world_model_events:
+    enable_collision_sensor: false
+    enable_lane_invasion_sensor: false
+    collision_intensity_scale: 0.01
+  world_model_terminal:
+    stuck_speed_kmh_threshold: 1.0
+    stuck_frames_threshold: 20
+    lane_invasion_frames_threshold: 5
+    offroad_frames_threshold: 5
+    collision_intensity_threshold: 0.75

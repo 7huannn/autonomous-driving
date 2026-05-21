@@ -4,7 +4,7 @@
 **Reference code**: https://github.com/two2tee/WorldModelPlanning  
 **Target project**: `carla-perception-lab`  
 **Last updated**: 2026-05-19  
-**Status**: proposed research extension, no implementation yet
+**Status**: Stage 13A implemented (offline world-model path); Stage 13B/13C remain proposed
 
 ---
 

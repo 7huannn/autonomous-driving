@@ -1,0 +1,80 @@
+carla:
+  host: localhost
+  port: 2000
+  timeout: 20.0
+  startup_wait_seconds: 30.0
+  map: Town10HD_Opt
+  weather: ClearNoon
+  quality: Low
+  tm_port: 10000
+  resolution:
+    width: 1280
+    height: 720
+sensors:
+  rgb_camera:
+    blueprint: sensor.camera.rgb
+    transform:
+      x: 1.5
+      y: 0.0
+      z: 2.2
+      pitch: -4.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      image_size_x: 640
+      image_size_y: 360
+      fov: 90
+      sensor_tick: 0.1
+  semantic_camera:
+    blueprint: sensor.camera.semantic_segmentation
+    transform:
+      x: 1.5
+      y: 0.0
+      z: 2.2
+      pitch: -4.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      image_size_x: 640
+      image_size_y: 360
+      fov: 90
+      sensor_tick: 0.1
+  lidar:
+    blueprint: sensor.lidar.ray_cast
+    transform:
+      x: 0.0
+      y: 0.0
+      z: 2.5
+      pitch: 0.0
+      yaw: 0.0
+      roll: 0.0
+    attributes:
+      channels: 64
+      points_per_second: 60000
+      rotation_frequency: 10
+      range: 100
+      upper_fov: 10
+      lower_fov: -30
+      sensor_tick: 0.1
+recording:
+  num_frames: 240
+  output_dir: data/raw/stage14_city_demo_autopilot_240
+  traffic_vehicles: 35
+  traffic_walkers: 40
+  prefer_cyclist_vehicles: 4
+  use_synchronous_mode: true
+  fixed_delta_seconds: 0.1
+  warmup_ticks: 20
+  sensor_timeout: 12.0
+  native_recorder: false
+  actor_label_max_distance_m: 120.0
+  world_model_events:
+    enable_collision_sensor: false
+    enable_lane_invasion_sensor: false
+    collision_intensity_scale: 0.01
+  world_model_terminal:
+    stuck_speed_kmh_threshold: 1.0
+    stuck_frames_threshold: 20
+    lane_invasion_frames_threshold: 5
+    offroad_frames_threshold: 5
+    collision_intensity_threshold: 0.75

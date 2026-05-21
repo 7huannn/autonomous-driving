@@ -1,0 +1,64 @@
+stage13:
+  mode: live_planning
+  allow_control_default: false
+
+rollout:
+  action_order: [steer, throttle, brake]
+  policy: autopilot_noise
+  reward_version: carla_progress_v1
+  terminal_version: carla_terminal_v1
+
+reward:
+  progress_weight: 1.0
+  speed_weight: 0.05
+  speed_norm_kmh: 40.0
+  collision_weight: 5.0
+  lane_invasion_penalty: 1.0
+  offroad_penalty: 2.0
+  steer_delta_weight: 0.02
+  stuck_penalty: 0.5
+
+terminal:
+  collision_intensity_threshold: 0.75
+  stuck_speed_kmh_threshold: 1.0
+  stuck_frames_threshold: 20
+  lane_invasion_frames_threshold: 5
+  offroad_frames_threshold: 5
+
+vae:
+  image_size: 64
+  channels: 3
+  latent_size: 64
+  batch_size: 32
+  learning_rate: 0.0001
+  epochs_smoke: 3
+  epochs_final: 50
+  kl_weight: 1.0
+
+mdrnn:
+  latent_size: 64
+  action_size: 3
+  hidden_size_smoke: 256
+  hidden_size_final: 512
+  num_gaussians: 5
+  sequence_length_smoke: 100
+  sequence_length_final: 250
+  batch_size: 1
+  learning_rate: 0.001
+  epochs_smoke: 3
+  epochs_final: 60
+
+planner:
+  action_order: [steer, throttle, brake]
+  horizon: 20
+  generations: 10
+  generation_sweep: [5, 10, 15]
+  horizon_sweep: [5, 10, 20]
+  mutation_std:
+    steer: 0.15
+    throttle: 0.10
+    brake: 0.10
+  action_bounds:
+    steer: [-1.0, 1.0]
+    throttle: [0.0, 1.0]
+    brake: [0.0, 1.0]

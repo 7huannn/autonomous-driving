@@ -25,6 +25,22 @@ This repository presents a practical integration of camera-based semantic segmen
 - `configs/world_model.yaml` defines `stage13.mode` as one of `offline`, `live_planning`, `iterative`.
 - Only `offline` is compatible with the original perception-only scope.
 - `live_planning` and `iterative` CLIs require explicit `--allow-stage13-control`.
+- Stage 13B closed-loop scripts:
+  - `scripts/run_planning_agent.py` (live CARLA planner/control rollout)
+  - `scripts/iterative_train.py` (iterative collect/train/evaluate orchestration)
+
+### Stage 14 Simulator Demo
+
+Stage 14 is a simulator-only CARLA demo that combines dynamic traffic/pedestrians, perception visualization, and optional Stage 13 EPLS live planning. It is not a real-road or production autonomous-driving system.
+The Stage 14 video is a simulator demo and perception visualization artifact, not an accuracy benchmark claim by itself.
+
+Report: `docs/stage_reports/STAGE_14_SIMULATOR_DEMO_REPORT.md`  
+Visual QA artifacts:
+- `output/demo/stage14_town10_road_lane_preview.mp4` - road/lane preview, no actor evidence.
+- `output/demo/stage14_actor_rich_visual_demo.mp4` - vehicle/pedestrian metadata overlay preview, no Town10 lane evidence.
+- `output/demo/stage14_live_autopilot_noise_visual.mp4` - live Stage 14 autopilot-noise visual replacement, no Town10 lane evidence.
+
+Do not use `output/demo/stage14_simulator_demo.mp4` as final hero evidence; it is rejected by the visual quality gate in the Stage 14 report.
 
 ## System Overview
 ```mermaid
